@@ -13,8 +13,10 @@ class InAppWebViewScreen extends StatefulWidget {
 class _InAppWebViewScreenState extends State<InAppWebViewScreen> {
   InAppWebViewController? webViewController;
   String baseUrl = "https://www.al-shoura.com/mob/";
-  bool hasInternet = true;
-  bool isLoading = true;
+
+  // استخدام ValueNotifier بدلاً من المتغيرات العادية
+  final ValueNotifier<bool> hasInternetNotifier = ValueNotifier<bool>(true);
+  final ValueNotifier<bool> isLoadingNotifier = ValueNotifier<bool>(true);
 
   @override
   void initState() {
@@ -23,26 +25,30 @@ class _InAppWebViewScreenState extends State<InAppWebViewScreen> {
     _listenToConnectivity();
   }
 
+  @override
+  void dispose() {
+    // التخلص من الـ ValueNotifier عند إغلاق الشاشة
+    hasInternetNotifier.dispose();
+    isLoadingNotifier.dispose();
+    super.dispose();
+  }
+
   /// فحص الاتصال أول ما التطبيق يفتح
   Future<void> _checkInternetOnStart() async {
     final connectivity = await Connectivity().checkConnectivity();
-    setState(() {
-      hasInternet = connectivity != ConnectivityResult.none;
-    });
+    hasInternetNotifier.value = connectivity != ConnectivityResult.none;
   }
 
   /// متابعة الاتصال أثناء الاستخدام
   void _listenToConnectivity() {
     Connectivity().onConnectivityChanged.listen((result) {
       final connected = result != ConnectivityResult.none;
-      if (connected && !hasInternet) {
+      if (connected && !hasInternetNotifier.value) {
         webViewController?.loadUrl(
           urlRequest: URLRequest(url: WebUri(baseUrl)),
         );
       }
-      setState(() {
-        hasInternet = connected;
-      });
+      hasInternetNotifier.value = connected;
     });
   }
 
@@ -87,57 +93,73 @@ class _InAppWebViewScreenState extends State<InAppWebViewScreen> {
       },
       child: Scaffold(
         backgroundColor: const Color(0xffbc9d61),
-        body: hasInternet
-            ? Stack(
-                children: [
-                  InAppWebView(
-                    initialUrlRequest: URLRequest(url: WebUri(baseUrl)),
-                    initialSettings: InAppWebViewSettings(
-                      transparentBackground: true,
-                      javaScriptEnabled: true,
-                      mediaPlaybackRequiresUserGesture: false,
-                      underPageBackgroundColor: const Color(0xffbc9d61),
-                      useShouldOverrideUrlLoading: true,
-                      clearCache: false,
-                      allowFileAccessFromFileURLs: true,
-                      allowUniversalAccessFromFileURLs: true,
-                    ),
-                    onWebViewCreated: (controller) {
-                      webViewController = controller;
-                    },
-                    shouldOverrideUrlLoading:
-                        (controller, navigationAction) async {
-                      final url = navigationAction.request.url.toString();
-                      if (url.contains(baseUrl)) {
-                        return NavigationActionPolicy.ALLOW;
-                      }
+        body: ValueListenableBuilder<bool>(
+          valueListenable: hasInternetNotifier,
+          builder: (context, hasInternet, child) {
+            return hasInternet
+                ? Stack(
+                    children: [
+                      InAppWebView(
+                        initialUrlRequest: URLRequest(url: WebUri(baseUrl)),
+                        initialSettings: InAppWebViewSettings(
+                          transparentBackground: true,
+                          javaScriptEnabled: true,
+                          mediaPlaybackRequiresUserGesture: false,
+                          underPageBackgroundColor: const Color(0xffbc9d61),
+                          useShouldOverrideUrlLoading: true,
+                          clearCache: false,
+                          allowFileAccessFromFileURLs: true,
+                          allowUniversalAccessFromFileURLs: true,
+                        ),
+                        onWebViewCreated: (controller) {
+                          webViewController = controller;
+                        },
+                        shouldOverrideUrlLoading:
+                            (controller, navigationAction) async {
+                          final url = navigationAction.request.url.toString();
+                          if (url.contains(baseUrl)) {
+                            return NavigationActionPolicy.ALLOW;
+                          }
 
-                      final opened = await _tryOpenUrl(url);
-                      if (!opened) {
-                        _showSnackBar("⚠️ الرابط غير صالح");
-                      }
-                      return NavigationActionPolicy.CANCEL;
-                    },
-                    onLoadStart: (controller, url) {
-                      setState(() => isLoading = true);
-                    },
-                    onLoadStop: (controller, url) async {
-                      setState(() => isLoading = false);
-                    },
-                    onReceivedError: (controller, request, error) {
-                      setState(() => hasInternet = false);
-                    },
-                    androidOnPermissionRequest:
-                        (controller, origin, resources) async {
-                      return PermissionRequestResponse(
-                        resources: resources,
-                        action: PermissionRequestResponseAction.GRANT,
-                      );
-                    },
-                  ),
-                ],
-              )
-            : _noInternetWidget(),
+                          final opened = await _tryOpenUrl(url);
+                          if (!opened) {
+                            _showSnackBar("⚠️ الرابط غير صالح");
+                          }
+                          return NavigationActionPolicy.CANCEL;
+                        },
+                        onLoadStart: (controller, url) {
+                          isLoadingNotifier.value = true;
+                        },
+                        onLoadStop: (controller, url) async {
+                          isLoadingNotifier.value = false;
+                        },
+                        onReceivedError: (controller, request, error) {
+                          // تحقق من نوع الخطأ - فقط أخطاء الاتصال تؤدي إلى تغيير حالة الإنترنت
+                          if (error.type ==
+                                  WebResourceErrorType
+                                      .NOT_CONNECTED_TO_INTERNET ||
+                              error.type == WebResourceErrorType.TIMEOUT ||
+                              error.type == WebResourceErrorType.HOST_LOOKUP ||
+                              error.type ==
+                                  WebResourceErrorType.CONNECTION_ABORTED ||
+                              error.type ==
+                                  WebResourceErrorType
+                                      .NETWORK_CONNECTION_LOST) {
+                            hasInternetNotifier.value = false;
+                          }
+                        },
+                        onPermissionRequest: (controller, request) async {
+                          return PermissionResponse(
+                            resources: request.resources,
+                            action: PermissionResponseAction.GRANT,
+                          );
+                        },
+                      ),
+                    ],
+                  )
+                : _noInternetWidget();
+          },
+        ),
       ),
     );
   }
