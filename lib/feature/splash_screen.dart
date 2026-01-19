@@ -14,6 +14,7 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     Future.delayed(const Duration(seconds: 2), () {
+      if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (_) => const InAppWebViewScreen()),
       );
@@ -23,16 +24,14 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xffbc9d61),
+      backgroundColor: Colors.transparent,
       body: Center(
-        child: ClipOval(
-          // borderRadius:   BorderRadius.circular(100),
-          child: Image.asset(
-            'assets/logo_new.png',
-            // fit: BoxFit.cover,
-            width: 150,
-            height: 150,
-          ),
+        child: Image.asset(
+          // 'assets/logo_new.png',
+          'assets/splash2.jpg',
+          fit: BoxFit.fill,
+          width: double.infinity,
+          height: double.infinity,
         ),
       ),
     );

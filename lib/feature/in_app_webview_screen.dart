@@ -12,7 +12,7 @@ class InAppWebViewScreen extends StatefulWidget {
 
 class _InAppWebViewScreenState extends State<InAppWebViewScreen> {
   InAppWebViewController? webViewController;
-  String baseUrl = "https://www.al-shoura.com/mob/";
+  String baseUrl = "https://salaa.net/";
 
   // استخدام ValueNotifier بدلاً من المتغيرات العادية
   final ValueNotifier<bool> hasInternetNotifier = ValueNotifier<bool>(true);
@@ -92,7 +92,7 @@ class _InAppWebViewScreenState extends State<InAppWebViewScreen> {
         return true;
       },
       child: Scaffold(
-        backgroundColor: const Color(0xffbc9d61),
+        // backgroundColor: const Color(0xffbc9d61),
         body: ValueListenableBuilder<bool>(
           valueListenable: hasInternetNotifier,
           builder: (context, hasInternet, child) {
