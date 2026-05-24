@@ -12,7 +12,7 @@ class InAppWebViewScreen extends StatefulWidget {
 
 class _InAppWebViewScreenState extends State<InAppWebViewScreen> {
   InAppWebViewController? webViewController;
-  String baseUrl = "https://salaa.net/";
+  String baseUrl = "https://harm.chat/";
 
   // استخدام ValueNotifier بدلاً من المتغيرات العادية
   final ValueNotifier<bool> hasInternetNotifier = ValueNotifier<bool>(true);
