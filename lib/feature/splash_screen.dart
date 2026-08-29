@@ -27,8 +27,7 @@ class _SplashScreenState extends State<SplashScreen> {
       backgroundColor: Colors.white,
       body: Center(
         child: Image.asset(
-          // 'assets/logo_new.png',
-          'assets/logo.jpeg',
+          'assets/noor_logo.png',
           fit: BoxFit.fill,
           width: 300,
           height: 300,

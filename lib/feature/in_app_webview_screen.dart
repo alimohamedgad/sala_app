@@ -13,7 +13,7 @@ class InAppWebViewScreen extends StatefulWidget {
 
 class _InAppWebViewScreenState extends State<InAppWebViewScreen> {
   InAppWebViewController? webViewController;
-  String baseUrl = "https://www.harm.chat/";
+  String baseUrl = "https://noor-digital.com";
 
   // استخدام ValueNotifier بدلاً من المتغيرات العادية
   final ValueNotifier<bool> hasInternetNotifier = ValueNotifier<bool>(true);
@@ -92,10 +92,10 @@ class _InAppWebViewScreenState extends State<InAppWebViewScreen> {
         }
         return true;
       },
-      child: SafeArea(
-        child: Scaffold(
-          // backgroundColor: const Color(0xffbc9d61),
-          body: ValueListenableBuilder<bool>(
+      child: Scaffold(
+        // backgroundColor: const Color(0xffbc9d61),
+        body: SafeArea(
+          child: ValueListenableBuilder<bool>(
             valueListenable: hasInternetNotifier,
             builder: (context, hasInternet, child) {
               return hasInternet
@@ -108,7 +108,7 @@ class _InAppWebViewScreenState extends State<InAppWebViewScreen> {
                             transparentBackground: true,
                             javaScriptEnabled: true,
                             mediaPlaybackRequiresUserGesture: false,
-                            underPageBackgroundColor: const Color(0xffbc9d61),
+                            underPageBackgroundColor: const Color(0xff34b4a6),
                             useShouldOverrideUrlLoading: true,
                             clearCache: false,
                             allowFileAccessFromFileURLs: true,
@@ -120,18 +120,37 @@ class _InAppWebViewScreenState extends State<InAppWebViewScreen> {
                           shouldOverrideUrlLoading:
                               (controller, navigationAction) async {
                             final url = navigationAction.request.url.toString();
-                            if (url.contains(baseUrl)) {
+                            final scheme = navigationAction.request.url?.scheme
+                                    ?.toLowerCase() ??
+                                '';
+
+                            // 1. السماح للروابط الأساسية والداخلية (بوابات الدفع، ديالوج، سكريبتات) بالفتح داخل التطبيق
+                            if ([
+                              'http',
+                              'https',
+                              'about',
+                              'data',
+                              'javascript',
+                              'blob',
+                              ''
+                            ].contains(scheme)) {
                               return NavigationActionPolicy.ALLOW;
                             }
 
+                            // 2. إذا كان رابط لتطبيق آخر (واتساب، اتصال، إيميل)، افتحه في الهاتف الخارجي
                             final opened = await _tryOpenUrl(url);
-                            if (!opened) {
-                              _showSnackBar("⚠️ الرابط غير صالح");
+
+                            // 3. إظهار رسالة الخطأ فقط إذا كان المستخدم هو من ضغط على الرابط (ليس رابطاً مخفياً في الخلفية)
+                            if (!opened && navigationAction.isForMainFrame) {
+                              _showSnackBar(
+                                  "⚠️ التطبيق المطلوب غير مثبت أو الرابط غير صالح");
                             }
+
                             return NavigationActionPolicy.CANCEL;
                           },
                           onLoadStart: (controller, url) {
-                            isLoadingNotifier.value = true;
+                            // تم إيقافها حتى لا تظهر شاشة التحميل مع كل تنقل داخل الموقع
+                            // isLoadingNotifier.value = true;
                           },
                           onLoadStop: (controller, url) async {
                             isLoadingNotifier.value = false;
@@ -182,6 +201,7 @@ class _InAppWebViewScreenState extends State<InAppWebViewScreen> {
                             );
                           },
                         ),
+                        loadingWidget(),
                       ],
                     )
                   : _noInternetWidget();
@@ -189,6 +209,86 @@ class _InAppWebViewScreenState extends State<InAppWebViewScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  ValueListenableBuilder<bool> loadingWidget() {
+    return ValueListenableBuilder<bool>(
+      valueListenable: isLoadingNotifier,
+      builder: (context, isLoading, child) {
+        if (isLoading) {
+          return Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xfff0faf9), Colors.white],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+            ),
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 80,
+                    height: 80,
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xff34b4a6).withOpacity(0.15),
+                          blurRadius: 30,
+                          offset: const Offset(0, 10),
+                          spreadRadius: 5,
+                        ),
+                      ],
+                      border: Border.all(
+                        color: const Color(0xff34b4a6).withOpacity(0.1),
+                        width: 1,
+                      ),
+                    ),
+                    child: const CircularProgressIndicator(
+                      color: Color(0xff34b4a6),
+                      strokeWidth: 3.5,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
+                  const Text(
+                    "مرحباً بكم في منصة نور الرقمية",
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xff34b4a6),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    "جاري التحميل...",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xff2d2d2d),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "يرجى الانتظار بضع ثوانٍ...",
+                    style: TextStyle(
+                      fontSize: 15,
+                      color: Colors.grey.shade600,
+                      height: 1.5,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+        return const SizedBox.shrink();
+      },
     );
   }
 

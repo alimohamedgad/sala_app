@@ -1,4 +1,4 @@
-package com.ejabatech.haramchat
+package com.noor_digital.app
 
 import io.flutter.embedding.android.FlutterActivity
 
