@@ -13,7 +13,7 @@ class InAppWebViewScreen extends StatefulWidget {
 
 class _InAppWebViewScreenState extends State<InAppWebViewScreen> {
   InAppWebViewController? webViewController;
-  String baseUrl = "https://www.harm.chat/";
+  String baseUrl = "https://waslney.com/";
 
   // استخدام ValueNotifier بدلاً من المتغيرات العادية
   final ValueNotifier<bool> hasInternetNotifier = ValueNotifier<bool>(true);
@@ -22,6 +22,7 @@ class _InAppWebViewScreenState extends State<InAppWebViewScreen> {
   @override
   void initState() {
     super.initState();
+    _requestLocationPermission();
     _checkInternetOnStart();
     _listenToConnectivity();
   }
@@ -32,6 +33,14 @@ class _InAppWebViewScreenState extends State<InAppWebViewScreen> {
     hasInternetNotifier.dispose();
     isLoadingNotifier.dispose();
     super.dispose();
+  }
+
+  /// طلب صلاحية الموقع فور فتح الشاشة
+  Future<void> _requestLocationPermission() async {
+    final status = await Permission.location.status;
+    if (status.isDenied) {
+      await Permission.location.request();
+    }
   }
 
   /// فحص الاتصال أول ما التطبيق يفتح
@@ -113,6 +122,7 @@ class _InAppWebViewScreenState extends State<InAppWebViewScreen> {
                             clearCache: false,
                             allowFileAccessFromFileURLs: true,
                             allowUniversalAccessFromFileURLs: true,
+                            geolocationEnabled: true,
                           ),
                           onWebViewCreated: (controller) {
                             webViewController = controller;
@@ -169,6 +179,13 @@ class _InAppWebViewScreenState extends State<InAppWebViewScreen> {
                                 if (status.isGranted) {
                                   grantedResources.add(resource);
                                 }
+                              } else if (resource ==
+                                  PermissionResourceType.GEOLOCATION) {
+                                final status =
+                                    await Permission.location.request();
+                                if (status.isGranted) {
+                                  grantedResources.add(resource);
+                                }
                               } else {
                                 grantedResources.add(resource);
                               }
@@ -180,6 +197,14 @@ class _InAppWebViewScreenState extends State<InAppWebViewScreen> {
                                   ? PermissionResponseAction.GRANT
                                   : PermissionResponseAction.DENY,
                             );
+                          },
+                          onGeolocationPermissionsShowPrompt:
+                              (controller, origin) async {
+                            final status = await Permission.location.request();
+                            return GeolocationPermissionShowPromptResponse(
+                                origin: origin,
+                                allow: status.isGranted,
+                                retain: true);
                           },
                         ),
                       ],
