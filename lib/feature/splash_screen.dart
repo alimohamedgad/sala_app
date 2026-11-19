@@ -25,13 +25,14 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Center(
-        child: Image.asset(
-          // 'assets/logo_new.png',
-          'assets/logo.jpeg',
-          fit: BoxFit.fill,
-          width: 300,
-          height: 300,
+      body: ClipOval(
+        child: Center(
+          child: Image.asset(
+            // 'assets/logo_new.png',
+            'assets/dd_perfume_logo.png',
+            width: 250,
+            height: 250,
+          ),
         ),
       ),
     );

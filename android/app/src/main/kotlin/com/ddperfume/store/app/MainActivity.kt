@@ -1,4 +1,4 @@
-package com.et.al_shoura
+package com.ddperfume.store.app
 
 import io.flutter.embedding.android.FlutterActivity
 
