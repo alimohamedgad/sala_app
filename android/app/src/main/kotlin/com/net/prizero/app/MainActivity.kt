@@ -1,4 +1,4 @@
-package com.et.al_shoura
+package com.net.prizero.app
 
 import io.flutter.embedding.android.FlutterActivity
 

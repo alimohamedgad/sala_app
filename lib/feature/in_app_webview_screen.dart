@@ -12,7 +12,7 @@ class InAppWebViewScreen extends StatefulWidget {
 
 class _InAppWebViewScreenState extends State<InAppWebViewScreen> {
   InAppWebViewController? webViewController;
-  String baseUrl = "https://harm.chat/";
+  String baseUrl = "https://prizero.net/ar/";
 
   // استخدام ValueNotifier بدلاً من المتغيرات العادية
   final ValueNotifier<bool> hasInternetNotifier = ValueNotifier<bool>(true);
@@ -83,82 +83,85 @@ class _InAppWebViewScreenState extends State<InAppWebViewScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return WillPopScope(
-      onWillPop: () async {
-        if (await webViewController?.canGoBack() ?? false) {
-          webViewController?.goBack();
-          return false;
-        }
-        return true;
-      },
-      child: Scaffold(
-        // backgroundColor: const Color(0xffbc9d61),
-        body: ValueListenableBuilder<bool>(
-          valueListenable: hasInternetNotifier,
-          builder: (context, hasInternet, child) {
-            return hasInternet
-                ? Stack(
-                    children: [
-                      InAppWebView(
-                        initialUrlRequest: URLRequest(url: WebUri(baseUrl)),
-                        initialSettings: InAppWebViewSettings(
-                          transparentBackground: true,
-                          javaScriptEnabled: true,
-                          mediaPlaybackRequiresUserGesture: false,
-                          underPageBackgroundColor: const Color(0xffbc9d61),
-                          useShouldOverrideUrlLoading: true,
-                          clearCache: false,
-                          allowFileAccessFromFileURLs: true,
-                          allowUniversalAccessFromFileURLs: true,
-                        ),
-                        onWebViewCreated: (controller) {
-                          webViewController = controller;
-                        },
-                        shouldOverrideUrlLoading:
-                            (controller, navigationAction) async {
-                          final url = navigationAction.request.url.toString();
-                          if (url.contains(baseUrl)) {
-                            return NavigationActionPolicy.ALLOW;
-                          }
+    return SafeArea(
+      child: WillPopScope(
+        onWillPop: () async {
+          if (await webViewController?.canGoBack() ?? false) {
+            webViewController?.goBack();
+            return false;
+          }
+          return true;
+        },
+        child: Scaffold(
+          // backgroundColor: const Color(0xffbc9d61),
+          body: ValueListenableBuilder<bool>(
+            valueListenable: hasInternetNotifier,
+            builder: (context, hasInternet, child) {
+              return hasInternet
+                  ? Stack(
+                      children: [
+                        InAppWebView(
+                          initialUrlRequest: URLRequest(url: WebUri(baseUrl)),
+                          initialSettings: InAppWebViewSettings(
+                            transparentBackground: true,
+                            javaScriptEnabled: true,
+                            mediaPlaybackRequiresUserGesture: false,
+                            underPageBackgroundColor: const Color(0xffbc9d61),
+                            useShouldOverrideUrlLoading: true,
+                            clearCache: false,
+                            allowFileAccessFromFileURLs: true,
+                            allowUniversalAccessFromFileURLs: true,
+                          ),
+                          onWebViewCreated: (controller) {
+                            webViewController = controller;
+                          },
+                          shouldOverrideUrlLoading:
+                              (controller, navigationAction) async {
+                            final url = navigationAction.request.url.toString();
+                            if (url.contains(baseUrl)) {
+                              return NavigationActionPolicy.ALLOW;
+                            }
 
-                          final opened = await _tryOpenUrl(url);
-                          if (!opened) {
-                            _showSnackBar("⚠️ الرابط غير صالح");
-                          }
-                          return NavigationActionPolicy.CANCEL;
-                        },
-                        onLoadStart: (controller, url) {
-                          isLoadingNotifier.value = true;
-                        },
-                        onLoadStop: (controller, url) async {
-                          isLoadingNotifier.value = false;
-                        },
-                        onReceivedError: (controller, request, error) {
-                          // تحقق من نوع الخطأ - فقط أخطاء الاتصال تؤدي إلى تغيير حالة الإنترنت
-                          if (error.type ==
-                                  WebResourceErrorType
-                                      .NOT_CONNECTED_TO_INTERNET ||
-                              error.type == WebResourceErrorType.TIMEOUT ||
-                              error.type == WebResourceErrorType.HOST_LOOKUP ||
-                              error.type ==
-                                  WebResourceErrorType.CONNECTION_ABORTED ||
-                              error.type ==
-                                  WebResourceErrorType
-                                      .NETWORK_CONNECTION_LOST) {
-                            hasInternetNotifier.value = false;
-                          }
-                        },
-                        onPermissionRequest: (controller, request) async {
-                          return PermissionResponse(
-                            resources: request.resources,
-                            action: PermissionResponseAction.GRANT,
-                          );
-                        },
-                      ),
-                    ],
-                  )
-                : _noInternetWidget();
-          },
+                            final opened = await _tryOpenUrl(url);
+                            if (!opened) {
+                              _showSnackBar("⚠️ الرابط غير صالح");
+                            }
+                            return NavigationActionPolicy.CANCEL;
+                          },
+                          onLoadStart: (controller, url) {
+                            isLoadingNotifier.value = true;
+                          },
+                          onLoadStop: (controller, url) async {
+                            isLoadingNotifier.value = false;
+                          },
+                          onReceivedError: (controller, request, error) {
+                            // تحقق من نوع الخطأ - فقط أخطاء الاتصال تؤدي إلى تغيير حالة الإنترنت
+                            if (error.type ==
+                                    WebResourceErrorType
+                                        .NOT_CONNECTED_TO_INTERNET ||
+                                error.type == WebResourceErrorType.TIMEOUT ||
+                                error.type ==
+                                    WebResourceErrorType.HOST_LOOKUP ||
+                                error.type ==
+                                    WebResourceErrorType.CONNECTION_ABORTED ||
+                                error.type ==
+                                    WebResourceErrorType
+                                        .NETWORK_CONNECTION_LOST) {
+                              hasInternetNotifier.value = false;
+                            }
+                          },
+                          onPermissionRequest: (controller, request) async {
+                            return PermissionResponse(
+                              resources: request.resources,
+                              action: PermissionResponseAction.GRANT,
+                            );
+                          },
+                        ),
+                      ],
+                    )
+                  : _noInternetWidget();
+            },
+          ),
         ),
       ),
     );
